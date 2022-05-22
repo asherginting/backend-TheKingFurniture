@@ -26,7 +26,7 @@ exports.getAllProduct = async (req, res) => {
   const setOrder = listOrder[orderBy - 1].split(' ');
   minPrice = parseInt(minPrice, 10) || 0;
   maxPrice = parseInt(maxPrice, 10) || 100000000;
-  limit = parseInt(limit, 10) || 12;
+  limit = parseInt(limit, 10) || 16;
   page = parseInt(page, 10) || 1;
   const dataName = ['search', 'minPrice', 'maxPrice'];
   const data = { search, minPrice, maxPrice };
@@ -77,8 +77,119 @@ exports.getAllProduct = async (req, res) => {
         [Sequelize.Op.gte]: minPrice,
         [Sequelize.Op.lte]: maxPrice,
       },
+      stock: {
+        [Sequelize.Op.gte]: 1,
+      },
       is_deleted: 0,
     },
+  });
+  const last = Math.ceil(count / limit);
+  const pageInfo = {
+    prev: page > 1 ? `${url}page=${page - 1}&limit=${limit}` : null,
+    next: page < last ? `${url}page=${page + 1}&limit=${limit}` : null,
+    totalData: count,
+    currentPage: page,
+    lastPage: last,
+  };
+  return responseHandler(res, 200, 'List of products', results, pageInfo);
+};
+
+exports.getFilteredProduct = async (req, res) => {
+  const { category, search = '', orderBy = 1 } = req.query;
+  let {
+    minPrice, maxPrice, limit, page,
+  } = req.query;
+  const listOrder = ['id DESC', 'id ASC', 'price DESC', 'price ASC'];
+  if (orderBy > listOrder.length) {
+    return responseHandler(res, 400, 'Wrong order');
+  }
+  let categoryList = [];
+  if (category.length > 0) {
+    categoryList = category.split(',');
+    categoryList = categoryList.map((obj) => parseInt(obj, 10));
+  }
+  let checkCategoriesError = false;
+  categoryList.forEach((obj) => {
+    if (Number.isNaN(obj)) {
+      checkCategoriesError = true;
+    }
+  });
+  if (checkCategoriesError) {
+    return responseHandler(res, 400, 'Wrong categories');
+  }
+  const setOrder = listOrder[orderBy - 1].split(' ');
+  minPrice = parseInt(minPrice, 10) || 0;
+  maxPrice = parseInt(maxPrice, 10) || 100000000;
+  limit = parseInt(limit, 10) || 12;
+  page = parseInt(page, 10) || 1;
+  const dataName = ['search', 'minPrice', 'maxPrice', 'category'];
+  const data = {
+    search, minPrice, maxPrice, category,
+  };
+  let url = `${APP_URL}/product?`;
+  dataName.forEach((x) => {
+    if (req.query[x]) {
+      data[x] = req.query[x];
+      url = `${url}${x}=${data[x]}&`;
+    }
+  });
+  const offset = (page - 1) * limit;
+  const results = await Product.findAll({
+    include: [
+      {
+        model: ProductCategory,
+        attributes: ['id_category'],
+        where: {
+          id_category: {
+            [Sequelize.Op.in]: categoryList,
+          },
+        },
+      },
+      {
+        model: ProductImage,
+        attributes: ['image'],
+      },
+    ],
+    where: {
+      name: {
+        [Sequelize.Op.like]: `%${search}%`,
+      },
+      price: {
+        [Sequelize.Op.gte]: minPrice,
+        [Sequelize.Op.lte]: maxPrice,
+      },
+      stock: {
+        [Sequelize.Op.gte]: 1,
+      },
+      is_deleted: 0,
+    },
+    order: [
+      [setOrder[0], setOrder[1]],
+    ],
+    limit,
+    offset,
+  });
+  const count = await Product.count({
+    where: {
+      name: {
+        [Sequelize.Op.like]: `%${search}%`,
+      },
+      price: {
+        [Sequelize.Op.gte]: minPrice,
+        [Sequelize.Op.lte]: maxPrice,
+      },
+      is_deleted: 0,
+    },
+    include: [
+      {
+        model: ProductCategory,
+        where: {
+          id_category: {
+            [Sequelize.Op.in]: categoryList,
+          },
+        },
+      },
+    ],
   });
   const last = Math.ceil(count / limit);
   const pageInfo = {
@@ -193,6 +304,9 @@ exports.createProduct = async (req, res) => {
       }
       return responseHandler(res, 401, 'You are not able to do this action');
     }
+    if (!req.body.id_category) {
+      return responseHandler(res, 400, 'Please enter at least 1 category', null, null);
+    }
     const listIdCategory = req.body.id_category.split(',');
     if (listIdCategory.length < 1) {
       return responseHandler(res, 400, 'Please enter at least 1 category', null, null);
@@ -210,7 +324,7 @@ exports.createProduct = async (req, res) => {
         const productImage = await ProductImage.create(data);
         if (!productImage) {
           deleteImages(req.files);
-          return responseHandler(res, 400, 'Cant upload image', null, null);
+          // return responseHandler(res, 400, 'Cant upload image', null, null);
         }
       });
     }

@@ -57,6 +57,9 @@ exports.getTransactionByUser = async (req, res) => {
             ProductImage,
           ],
         },
+        {
+          model: TransactionStatus,
+        },
       ],
       where: {
         id_user: req.user.id,

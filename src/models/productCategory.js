@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 const sequelize = require('../helpers/sequelize');
 
 // const Product = require('./product');
-// const Category = require('./category');
+const Category = require('./category');
 
 const ProductCategory = sequelize.define('product_category', {
   id_product: {
@@ -14,10 +14,10 @@ const ProductCategory = sequelize.define('product_category', {
   },
   id_category: {
     type: Sequelize.INTEGER,
-    // references: {
-    //   model: Category,
-    //   key: 'id',
-    // },
+    references: {
+      model: Category,
+      key: 'id',
+    },
   },
   is_deleted: {
     type: Sequelize.BOOLEAN,

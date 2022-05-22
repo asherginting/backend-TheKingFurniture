@@ -5,6 +5,7 @@ const { verifyUser } = require('../helpers/auth');
 const uploadImage = require('../helpers/upload');
 
 product.get('/', productController.getAllProduct);
+product.get('/filtered', productController.getFilteredProduct);
 product.post('/', verifyUser, uploadImage('image', 10), productController.createProduct);
 product.patch('/:id', verifyUser, uploadImage('image', 10), productController.updateProduct);
 product.get('/:id', productController.productDetail);

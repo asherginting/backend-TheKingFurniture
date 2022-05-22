@@ -21,8 +21,8 @@ const Category = sequelize.define('category', {
   },
 });
 
-Product.hasMany(ProductCategory, { foreignKey: 'id_product' });
-ProductCategory.belongsTo(Product, { foreignKey: 'id_product' });
-Category.hasMany(ProductCategory, { foreignkey: { name: 'id_category' } });
-ProductCategory.belongsTo(Category, { foreignKey: { name: 'id_category' } });
+// Product.hasMany(ProductCategory, { foreignKey: 'id_product' });
+// ProductCategory.belongsTo(Product, { foreignKey: 'id_product' });
+// Category.hasMany(ProductCategory, { foreignkey: { name: 'id_category' } });
+// ProductCategory.belongsTo(Category, { foreignKey: { name: 'id_category' } });
 module.exports = Category;

@@ -6,6 +6,7 @@ const Transaction = require('./transaction');
 const Review = require('./review');
 const TransactionStatus = require('./transactionStatus');
 const FavoriteProduct = require('./favoriteProduct');
+const Category = require('./category');
 
 const Product = sequelize.define('product', {
   name: {
@@ -93,6 +94,10 @@ Transaction.belongsTo(TransactionStatus, { foreignKey: 'id_transaction_status' }
 TransactionStatus.hasMany(Transaction, { foreignKey: 'id_transaction_status' });
 Product.hasMany(FavoriteProduct, { foreignKey: 'id_product' });
 FavoriteProduct.belongsTo(Product, { foreignKey: 'id_product' });
+Product.hasMany(ProductCategory, { foreignKey: 'id_product' });
+ProductCategory.belongsTo(Product, { foreignKey: 'id_product' });
+// ProductCategory.belongsTo(Category, { foreignKey: 'id_category' });
+// Category.hasMany(ProductCategory, { foreignKey: 'id_category' });
 // Product.hasMany(ColorProduct, { foreignKey: 'id_product' });
 Product.hasMany(Review, { foreignKey: 'id_product', as: 'ProductReviews' });
 
